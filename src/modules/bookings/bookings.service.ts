@@ -18,7 +18,7 @@ import { Facility, FacilityDocument } from '../../database/schemas/facility.mong
 import { FacilitiesService } from '../facilities/facilities.service';
 import { CreateBookingDtoType, CancelBookingDtoType } from '@yallaplay/shared-types';
 
-const POINTS_PER_BOOKING = 5;
+const POINTS_PER_BOOKING = 1;
 const PENDING_PAYMENT_TTL_MS = 15 * 60 * 1000; // 15 minutes
 
 @Injectable()
@@ -499,6 +499,12 @@ export class BookingsService {
     await this.userModel.updateOne(
       { _id: booking.userId },
       { $inc: { points: POINTS_PER_BOOKING } },
+    );
+
+    // Award 1 point to the owner for confirming the booking
+    await this.userModel.updateOne(
+      { _id: facility.ownerId },
+      { $inc: { points: 1 } },
     );
 
     await this.facilitiesService.incrementBookingCount(facility._id.toString());
