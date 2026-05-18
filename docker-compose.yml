@@ -30,9 +30,6 @@ services:
       NODE_ENV: production
       PORT: 7600
       MONGODB_URI: mongodb://${MONGO_ROOT_USER:-yallaplay}:${MONGO_ROOT_PASS:-change_me_strong_password}@mongo:27017/yallaplay?authSource=admin
-      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
-      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
-      JWT_QR_SECRET: ${JWT_QR_SECRET}
       SMS_PROVIDER: ${SMS_PROVIDER:-console}
       WHATSAPP_AUTH_DIR: /app/.wa_session
     volumes:
