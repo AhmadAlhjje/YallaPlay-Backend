@@ -20,12 +20,14 @@ services:
   # ── API (NestJS) ───────────────────────────────────────────────────────────
   api:
     build:
-      context: ../..          # monorepo root
-      dockerfile: apps/api/Dockerfile
+      context: .              # repo root
+      dockerfile: Dockerfile
     container_name: yallaplay_api
     restart: unless-stopped
     ports:
       - "7600:7600"
+    env_file:
+      - .env.production
     environment:
       NODE_ENV: production
       PORT: 7600
