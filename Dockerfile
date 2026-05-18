@@ -5,6 +5,8 @@ WORKDIR /app
 
 # Copy dependency manifests
 COPY package.json package-lock.json ./
+COPY packages/shared-types/package.json ./packages/shared-types/
+COPY packages/shared-types/dist ./packages/shared-types/dist
 
 # Install all deps for build
 RUN npm ci
@@ -12,7 +14,8 @@ RUN npm ci
 # Copy source
 COPY . .
 
-# Build NestJS app
+# Build shared-types, then API
+RUN npm --prefix packages/shared-types run build
 RUN npm run build
 
 # ── Stage 2: Production ───────────────────────────────────────────────────────
@@ -22,6 +25,8 @@ WORKDIR /app
 
 # Copy dependency manifests
 COPY package.json package-lock.json ./
+COPY packages/shared-types/package.json ./packages/shared-types/
+COPY packages/shared-types/dist ./packages/shared-types/dist
 
 # Install production deps only
 RUN npm ci --omit=dev
