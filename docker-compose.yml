@@ -29,7 +29,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 7600
-      MONGODB_URI: mongodb://${MONGO_ROOT_USER:-yallaplay}:${MONGO_ROOT_PASS:-change_me_strong_password}@mongo:27017/yallaplay?authSource=admin
+      MONGODB_URI: ${MONGODB_URI}
       SMS_PROVIDER: ${SMS_PROVIDER:-console}
       WHATSAPP_AUTH_DIR: /app/.wa_session
     volumes:
