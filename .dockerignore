@@ -1,3 +1,7 @@
 node_modules
 dist
-!packages/shared-types/dist
+.env
+.env.*
+!.env.example
+.git
+.wa_session

@@ -5,17 +5,21 @@ WORKDIR /app
 
 # Copy dependency manifests
 COPY package.json package-lock.json ./
+COPY packages/config/ ./packages/config/
 COPY packages/shared-types/package.json ./packages/shared-types/
-COPY packages/shared-types/dist ./packages/shared-types/dist
 
-# Install all deps for build
+# Install all deps (including devDependencies needed for build)
 RUN npm ci
 
-# Copy source
+# Copy shared-types source and build it
+COPY packages/shared-types/src ./packages/shared-types/src
+COPY packages/shared-types/tsconfig.json ./packages/shared-types/
+
+RUN npm --prefix packages/shared-types run build
+
+# Copy remaining source and build the API
 COPY . .
 
-# Build shared-types, then API
-RUN npm --prefix packages/shared-types run build
 RUN npm run build
 
 # ── Stage 2: Production ───────────────────────────────────────────────────────
@@ -25,13 +29,16 @@ WORKDIR /app
 
 # Copy dependency manifests
 COPY package.json package-lock.json ./
+COPY packages/config/ ./packages/config/
 COPY packages/shared-types/package.json ./packages/shared-types/
-COPY packages/shared-types/dist ./packages/shared-types/dist
 
 # Install production deps only
 RUN npm ci --omit=dev
 
-# Copy built output
+# Copy built shared-types from builder
+COPY --from=builder /app/packages/shared-types/dist ./packages/shared-types/dist
+
+# Copy built API output
 COPY --from=builder /app/dist ./dist
 
 EXPOSE 7600
