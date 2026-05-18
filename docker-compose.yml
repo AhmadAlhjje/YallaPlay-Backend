@@ -36,9 +36,9 @@ services:
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
       JWT_QR_SECRET: ${JWT_QR_SECRET}
       SMS_PROVIDER: ${SMS_PROVIDER:-console}
-      WHATSAPP_AUTH_DIR: /app/apps/api/.wa_session
+      WHATSAPP_AUTH_DIR: /app/.wa_session
     volumes:
-      - wa_session:/app/apps/api/.wa_session
+      - wa_session:/app/.wa_session
     depends_on:
       - mongo
     networks:
