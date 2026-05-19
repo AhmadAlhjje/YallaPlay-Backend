@@ -1,7 +1,6 @@
 import { NestFactory, Reflector } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
-import * as fs from 'fs';  
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
@@ -9,23 +8,7 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
 import { RolesGuard } from './modules/auth/guards/roles.guard';
 
 async function bootstrap() {
-  // ← أضف هذا الجزء: إعداد HTTPS
-  let httpsOptions;
-  
-  if (process.env.SSL_KEY_PATH && process.env.SSL_CERT_PATH) {
-    // للإنتاج: استخدم شهادات حقيقية
-    httpsOptions = {
-      key: fs.readFileSync(process.env.SSL_KEY_PATH),
-      cert: fs.readFileSync(process.env.SSL_CERT_PATH),
-    };
-  } else {
-    // للتطوير: شهادة ذاتية (أو يمكنك رفعها للـ VPS)
-    httpsOptions = {
-      key: fs.readFileSync('./ssl/key.pem'),
-      cert: fs.readFileSync('./ssl/cert.pem'),
-    };
-  }
-  
+ 
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: ['error', 'warn', 'log', 'debug'],
     bodyParser: false, // Disable built-in parser so our custom limit applies first
