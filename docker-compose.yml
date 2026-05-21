@@ -22,8 +22,8 @@ services:
       dockerfile: Dockerfile
     container_name: yallaplay_api
     restart: unless-stopped
-    ports:
-      - "7600:7600"
+    expose:
+      - "7600"
     env_file:
       - .env.production
     environment:
@@ -46,3 +46,15 @@ volumes:
 networks:
   yallaplay_net:
     driver: bridge
+nginx:
+    image: nginx:alpine
+    container_name: yallaplay_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - /etc/nginx/conf.d:/etc/nginx/conf.d:ro
+    depends_on:
+      - api
+    networks:
+      - yallaplay_net 
