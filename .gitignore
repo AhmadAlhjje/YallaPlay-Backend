@@ -13,6 +13,7 @@ coverage/
 out/
 build/
 dist/
+.env.example
 
 # Environment variables
 .env

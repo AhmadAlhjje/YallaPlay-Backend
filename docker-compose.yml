@@ -1,62 +1,95 @@
 services:
-  # ── MongoDB ────────────────────────────────────────────────────────────────
+
+  # ── Redis (required for Bull job queues) ─────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: yallaplay_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - yallaplay_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── MongoDB ───────────────────────────────────────────────────────────────
   mongo:
     image: mongo:7
     container_name: yallaplay_mongo
     restart: unless-stopped
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-yallaplay}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASS:-change_me_strong_password}
+      MONGO_INITDB_ROOT_USERNAME: yallaplay
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASS}
       MONGO_INITDB_DATABASE: yallaplay
     volumes:
       - mongo_data:/data/db
-    ports:
-      - "27017:27017"          # Remove this line in production for security
+    # No external ports — MongoDB is only accessible inside Docker network
     networks:
       - yallaplay_net
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')", "--quiet"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
 
-  # ── API (NestJS) ───────────────────────────────────────────────────────────
+  # ── NestJS API ────────────────────────────────────────────────────────────
   api:
     build:
-      context: .              # repo root
+      context: .
       dockerfile: Dockerfile
     container_name: yallaplay_api
     restart: unless-stopped
     expose:
-      - "7600"
+      - "7000"          # internal only — nginx handles external traffic on port 80
     env_file:
       - .env.production
-    environment:
-      NODE_ENV: production
-      PORT: 7600
-      MONGODB_URI: ${MONGODB_URI}
-      SMS_PROVIDER: ${SMS_PROVIDER:-console}
-      WHATSAPP_AUTH_DIR: /app/.wa_session
     volumes:
       - wa_session:/app/.wa_session
+      - uploads:/app/uploads
     depends_on:
-      - mongo
+      redis:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
     networks:
       - yallaplay_net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:7000/api/v1/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
-  # ── Nginx ──────────────────────────────────────────────────────────────────
+  # ── nginx reverse proxy ───────────────────────────────────────────────────
+  # The ONLY service exposed to the internet.
+  # Port 80 works through all VPNs and firewalls.
   nginx:
     image: nginx:alpine
     container_name: yallaplay_nginx
     restart: unless-stopped
     ports:
-      - "8080:80"
+      - "80:80"
     volumes:
-      - /etc/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - uploads:/app/uploads:ro
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     networks:
       - yallaplay_net
 
+# ── Volumes ───────────────────────────────────────────────────────────────────
 volumes:
   mongo_data:
+  redis_data:
   wa_session:
+  uploads:
 
+# ── Networks ──────────────────────────────────────────────────────────────────
 networks:
   yallaplay_net:
     driver: bridge

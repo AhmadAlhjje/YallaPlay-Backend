@@ -33,6 +33,9 @@ import { validateEnv } from './config/env.validation';
           host: process.env.REDIS_HOST || 'localhost',
           port: parseInt(process.env.REDIS_PORT || '6379', 10),
           password: process.env.REDIS_PASSWORD || undefined,
+          // Reconnect automatically if Redis restarts
+          maxRetriesPerRequest: null,
+          enableReadyCheck: false,
         },
         defaultJobOptions: {
           attempts: 3,

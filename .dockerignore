@@ -5,3 +5,8 @@ dist
 !.env.example
 .git
 .wa_session
+uploads
+*.log
+.vscode
+.claude
+deploy.sh
