@@ -58,11 +58,11 @@ services:
     networks:
       - yallaplay_net
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:7000/api/v1/health || exit 1"]
+      test: ["CMD-SHELL", "nc -z localhost 7000 || exit 1"]
       interval: 30s
       timeout: 10s
-      retries: 3
-      start_period: 40s
+      retries: 5
+      start_period: 60s
 
   # ── nginx reverse proxy ───────────────────────────────────────────────────
   # The ONLY service exposed to the internet.
@@ -77,8 +77,7 @@ services:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
       - uploads:/app/uploads:ro
     depends_on:
-      api:
-        condition: service_healthy
+      - api
     networks:
       - yallaplay_net
 
