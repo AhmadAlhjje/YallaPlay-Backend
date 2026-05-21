@@ -39,14 +39,8 @@ services:
     networks:
       - yallaplay_net
 
-volumes:
-  mongo_data:
-  wa_session:
-
-networks:
-  yallaplay_net:
-    driver: bridge
-nginx:
+  # ── Nginx ──────────────────────────────────────────────────────────────────
+  nginx:
     image: nginx:alpine
     container_name: yallaplay_nginx
     restart: unless-stopped
@@ -57,4 +51,12 @@ nginx:
     depends_on:
       - api
     networks:
-      - yallaplay_net 
+      - yallaplay_net
+
+volumes:
+  mongo_data:
+  wa_session:
+
+networks:
+  yallaplay_net:
+    driver: bridge
