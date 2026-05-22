@@ -10,7 +10,7 @@ services:
       - redis_data:/data
     networks:
       - yallaplay_net
-    healthcheck:
+    healthcheck:  
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
@@ -21,6 +21,8 @@ services:
     image: mongo:7
     container_name: yallaplay_mongo
     restart: unless-stopped
+    env_file:
+    - .env.production
     environment:
       MONGO_INITDB_ROOT_USERNAME: yallaplay
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASS}
