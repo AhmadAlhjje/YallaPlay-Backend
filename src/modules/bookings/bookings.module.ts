@@ -4,6 +4,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { BullModule } from '@nestjs/bull';
 import { BookingsService } from './bookings.service';
 import { BookingsController } from './bookings.controller';
+import { BookingsGateway } from './bookings.gateway';
 import { Booking, BookingSchema } from '../../database/schemas/booking.mongoose-schema';
 import { User, UserSchema } from '../../database/schemas/user.mongoose-schema';
 import { Facility, FacilitySchema } from '../../database/schemas/facility.mongoose-schema';
@@ -24,7 +25,7 @@ import { FacilitiesModule } from '../facilities/facilities.module';
     FacilitiesModule,
   ],
   controllers: [BookingsController],
-  providers: [BookingsService],
-  exports: [BookingsService],
+  providers: [BookingsService, BookingsGateway],
+  exports: [BookingsService, BookingsGateway],
 })
 export class BookingsModule {}

@@ -5,6 +5,8 @@ import {
   ForbiddenException,
   ConflictException,
   Logger,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -16,6 +18,7 @@ import { Booking, BookingDocument } from '../../database/schemas/booking.mongoos
 import { User, UserDocument } from '../../database/schemas/user.mongoose-schema';
 import { Facility, FacilityDocument } from '../../database/schemas/facility.mongoose-schema';
 import { FacilitiesService } from '../facilities/facilities.service';
+import { BookingsGateway } from './bookings.gateway';
 import { CreateBookingDtoType, CancelBookingDtoType } from '@yallaplay/shared-types';
 
 const POINTS_PER_BOOKING = 1;
@@ -34,6 +37,7 @@ export class BookingsService {
     private facilitiesService: FacilitiesService,
     @InjectQueue('notifications') private notificationQueue: Queue,
     @InjectQueue('waitlist') private waitlistQueue: Queue,
+    @Inject(forwardRef(() => BookingsGateway)) private bookingsGateway: BookingsGateway,
   ) {}
 
   // ─── Create Booking ────────────────────────────────────────────────────────
@@ -110,14 +114,27 @@ export class BookingsService {
     // 9. Notify owner about the new booking request (fire-and-forget)
     this.userModel.findById(userId).select('name').lean().then((athlete) => {
       const athleteName = (athlete as any)?.name ?? 'لاعب';
-      this.notificationQueue.add('new_booking', {
-        ownerId: facility.ownerId.toString(),
+      const ownerId = facility.ownerId.toString();
+      const notifPayload = {
+        ownerId,
         bookingId: booking._id.toString(),
         facilityName: facility.name,
         date: dto.date,
         startTime: dto.startTime,
         userName: athleteName,
-      }).catch((err) => this.logger.warn(`notification queue error: ${err?.message}`));
+        sport: dto.sport,
+      };
+
+      // Push notification via queue
+      this.notificationQueue.add('new_booking', notifPayload)
+        .catch((err) => this.logger.warn(`notification queue error: ${err?.message}`));
+
+      // Real-time socket notification
+      try {
+        this.bookingsGateway.notifyNewBooking(ownerId, notifPayload);
+      } catch (err: any) {
+        this.logger.warn(`socket emit error: ${err?.message}`);
+      }
     }).catch((err) => this.logger.warn(`user fetch error: ${err?.message}`));
 
     this.logger.log(`Booking created: ${booking._id} | User: ${userId} | Facility: ${dto.facilityId}`);
