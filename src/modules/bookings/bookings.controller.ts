@@ -107,14 +107,18 @@ export class BookingsController {
   @ApiOperation({ summary: '[Owner] List all bookings for a facility' })
   @ApiQuery({ name: 'date', required: false })
   @ApiQuery({ name: 'status', required: false })
-  @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'page', required: false, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, example: 30 })
   findByFacility(
     @Param('facilityId') facilityId: string,
     @CurrentUser() user: JwtPayloadType,
     @Query('date') date?: string,
     @Query('status') status?: string,
     @Query('page') page?: string,
+    @Query('limit') limit?: string,
   ) {
-    return this.bookingsService.findByFacility(facilityId, user.sub, date, status, page ? Number(page) : 1);
+    const p = page  ? Math.max(1, Number(page))  : 1;
+    const l = limit ? Math.min(100, Math.max(1, Number(limit))) : 30;
+    return this.bookingsService.findByFacility(facilityId, user.sub, date, status, p, l);
   }
 }

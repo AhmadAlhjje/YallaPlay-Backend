@@ -12,6 +12,7 @@ import {
 import { User, UserSchema } from '../../database/schemas/user.mongoose-schema';
 import { Booking, BookingSchema } from '../../database/schemas/booking.mongoose-schema';
 import { Facility, FacilitySchema } from '../../database/schemas/facility.mongoose-schema';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { Facility, FacilitySchema } from '../../database/schemas/facility.mongoo
       { name: Facility.name, schema: FacilitySchema },
     ]),
     BullModule.registerQueue({ name: 'notifications' }),
+    AuthModule,
   ],
   controllers: [NotificationsController],
   providers: [NotificationsService, NotificationsProcessor, NotificationsCron],

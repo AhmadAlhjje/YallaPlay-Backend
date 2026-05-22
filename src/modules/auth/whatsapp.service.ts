@@ -127,6 +127,16 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
     this.logger.log(`OTP sent via WhatsApp to ${phone}`);
   }
 
+  async sendMessage(phone: string, text: string): Promise<void> {
+    if (!this.socket || !this.isReady) {
+      this.logger.debug(`[WA MOCK] To: ${phone} | ${text.slice(0, 60)}`);
+      return;
+    }
+    const to = this.toJid(phone);
+    await this.socket.sendMessage(to, { text });
+    this.logger.log(`WhatsApp message sent to ${phone}`);
+  }
+
   private toJid(phone: string): string {
     const digits = phone.replace(/\D/g, '');
     return `${digits}@s.whatsapp.net`;

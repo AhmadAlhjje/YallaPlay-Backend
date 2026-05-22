@@ -16,6 +16,6 @@ import { User, UserSchema } from '../../database/schemas/user.mongoose-schema';
   ],
   controllers: [AuthController],
   providers: [AuthService, WhatsappService, JwtStrategy],
-  exports: [AuthService, JwtStrategy, PassportModule],
+  exports: [AuthService, JwtStrategy, PassportModule, WhatsappService],
 })
 export class AuthModule {}

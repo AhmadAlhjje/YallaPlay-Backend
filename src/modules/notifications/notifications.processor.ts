@@ -2,6 +2,15 @@ import { Processor, Process } from '@nestjs/bull';
 import { Job } from 'bull';
 import { Logger } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
+import { WhatsappService } from '../auth/whatsapp.service';
+
+const ARABIC_DAYS = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+
+function getArabicDay(dateStr: string): string {
+  // dateStr is "YYYY-MM-DD" — parse as local midnight to avoid UTC-day shift
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return ARABIC_DAYS[new Date(y, m - 1, d).getDay()];
+}
 
 // All notification types dispatched from other services land here.
 // Centralizing in a Bull processor decouples notification logic from
@@ -10,18 +19,38 @@ import { NotificationsService } from './notifications.service';
 export class NotificationsProcessor {
   private readonly logger = new Logger(NotificationsProcessor.name);
 
-  constructor(private readonly notificationsService: NotificationsService) {}
+  constructor(
+    private readonly notificationsService: NotificationsService,
+    private readonly whatsappService: WhatsappService,
+  ) {}
 
   @Process('booking_confirmed')
   async onBookingConfirmed(job: Job) {
-    const { userId, facilityName, date, startTime } = job.data;
+    const { userId, facilityName, date, startTime, endTime, userPhone, mapLink } = job.data;
+
+    // 1. In-app + FCM push notification
     await this.notificationsService.sendPush({
       userId,
       type: 'booking_confirmed',
       title: '✅ تم تأكيد حجزك',
-      body: `حجزك في ${facilityName} بتاريخ ${date} الساعة ${startTime} مؤكد.`,
+      body: `حجزك في ${facilityName} — ${getArabicDay(date)} ${date} الساعة ${startTime} – ${endTime ?? ''} مؤكد.`,
       data: { bookingId: job.data.bookingId, screen: 'BookingDetail' },
     });
+
+    // 2. WhatsApp confirmation message — only after owner confirms
+    if (userPhone) {
+      const locationLine = mapLink ? `\n📍 الموقع على الخريطة: ${mapLink}` : '';
+      const waMessage =
+        `🏟️ تم الحجز بنجاح!\n` +
+        `الملعب: ${facilityName}\n` +
+        `📅 التاريخ: ${getArabicDay(date)} ${date}\n` +
+        `🕐 الوقت: ${startTime} – ${endTime ?? ''}` +
+        locationLine;
+
+      this.whatsappService
+        .sendMessage(userPhone, waMessage)
+        .catch((err) => this.logger.warn(`WhatsApp booking confirm error: ${err?.message}`));
+    }
   }
 
   @Process('booking_reminder')

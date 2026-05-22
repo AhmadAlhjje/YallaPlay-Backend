@@ -105,5 +105,6 @@ BookingSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0, name: 'booking_tt
 
 // Query optimization indexes
 BookingSchema.index({ userId: 1, status: 1 });
+BookingSchema.index({ userId: 1, date: 1, status: 1 }); // for user booking history (upcoming/past)
 BookingSchema.index({ facilityId: 1, date: 1, status: 1 });
 BookingSchema.index({ status: 1, reminderSent: 1 }); // for reminder cron job

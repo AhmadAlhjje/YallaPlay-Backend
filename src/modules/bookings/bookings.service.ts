@@ -158,7 +158,7 @@ export class BookingsService {
     // 2. Fetch booking
     const booking = await this.bookingModel
       .findById(payload.bookingId)
-      .populate('facilityId')
+      .populate('facilityId', 'ownerId name address phone location')
       .lean();
     if (!booking) throw new NotFoundException('الحجز غير موجود.');
 
@@ -187,7 +187,7 @@ export class BookingsService {
   async markPaymentSubmitted(bookingId: string, userId: string, screenshot?: string): Promise<void> {
     const booking = await this.bookingModel
       .findById(bookingId)
-      .populate('facilityId')
+      .populate('facilityId', 'ownerId name')
       .lean();
     if (!booking) throw new NotFoundException('الحجز غير موجود.');
 
@@ -230,7 +230,7 @@ export class BookingsService {
   async confirmBookingManual(bookingId: string, ownerId: string): Promise<BookingDocument> {
     const booking = await this.bookingModel
       .findById(bookingId)
-      .populate('facilityId')
+      .populate('facilityId', 'ownerId name address phone location')
       .lean();
     if (!booking) throw new NotFoundException('الحجز غير موجود.');
 
@@ -256,7 +256,10 @@ export class BookingsService {
     requesterRole: string,
     dto: CancelBookingDtoType,
   ): Promise<BookingDocument> {
-    const booking = await this.bookingModel.findById(bookingId).populate('facilityId').lean();
+    const booking = await this.bookingModel
+      .findById(bookingId)
+      .populate('facilityId', 'ownerId name')
+      .lean();
     if (!booking) throw new NotFoundException('الحجز غير موجود.');
 
     const facility = booking.facilityId as unknown as FacilityDocument;
@@ -526,13 +529,25 @@ export class BookingsService {
 
     await this.facilitiesService.incrementBookingCount(facility._id.toString());
 
-    this.notificationQueue.add('booking_confirmed', {
-      userId: booking.userId.toString(),
-      bookingId,
-      facilityName: facility.name,
-      date: booking.date,
-      startTime: booking.startTime,
-    }).catch((err) => this.logger.warn(`notification queue error: ${err?.message}`));
+    // Build Google Maps link from facility coordinates (if available)
+    const loc = (facility as any).location;
+    const mapLink = loc?.coordinates?.length === 2
+      ? `https://www.google.com/maps?q=${loc.coordinates[1]},${loc.coordinates[0]}`
+      : null;
+
+    // Fetch user phone for WhatsApp confirmation — fire-and-forget
+    this.userModel.findById(booking.userId).select('phone').lean().then((u) => {
+      this.notificationQueue.add('booking_confirmed', {
+        userId: booking.userId.toString(),
+        bookingId,
+        facilityName: facility.name,
+        date: booking.date,
+        startTime: booking.startTime,
+        endTime: (booking as any).endTime ?? '',
+        userPhone: (u as any)?.phone ?? null,
+        mapLink,
+      }).catch((err) => this.logger.warn(`notification queue error: ${err?.message}`));
+    }).catch((err) => this.logger.warn(`user fetch for notification error: ${err?.message}`));
 
     return updated as BookingDocument;
   }

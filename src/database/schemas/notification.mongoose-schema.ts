@@ -37,3 +37,5 @@ NotificationSchema.index(
 );
 
 NotificationSchema.index({ userId: 1, isRead: 1 });
+// Compound index for sorted inbox query: find by user + sort by createdAt DESC
+NotificationSchema.index({ userId: 1, createdAt: -1 });

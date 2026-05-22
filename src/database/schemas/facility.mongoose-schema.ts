@@ -83,4 +83,5 @@ export const FacilitySchema = SchemaFactory.createForClass(Facility);
 FacilitySchema.index({ location: '2dsphere' }, { sparse: true }); // sparse: skip docs without location
 FacilitySchema.index({ sports: 1, isActive: 1 });
 FacilitySchema.index({ totalBookings: -1 }); // for "popular" sort
+FacilitySchema.index({ rating: -1, isActive: 1 }); // for "top-rated" sort
 FacilitySchema.index({ name: 'text', description: 'text' }); // full-text search
