@@ -10,12 +10,12 @@ import {
   UseGuards,
   DefaultValuePipe,
   ParseIntPipe,
-  ParseBoolPipe,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
+import { SportsService, CreateSportDto, UpdateSportDto } from '../sports/sports.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { PlanTier, UserRole } from '@yallaplay/shared-types';
@@ -29,7 +29,10 @@ import { PlanTier, UserRole } from '@yallaplay/shared-types';
 @Roles('admin')
 @Controller('admin')
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+  constructor(
+    private readonly adminService: AdminService,
+    private readonly sportsService: SportsService,
+  ) {}
 
   // ─── Users ─────────────────────────────────────────────────────────────────
 
@@ -131,6 +134,46 @@ export class AdminController {
   @ApiOperation({ summary: '[Admin] Restore a suspended facility' })
   restoreFacility(@Param('id') id: string) {
     return this.adminService.adminRestoreFacility(id);
+  }
+
+  // ─── Sports Management ─────────────────────────────────────────────────────
+  // NOTE: static routes (sports/reorder) must come BEFORE parametric routes (sports/:id)
+
+  @Get('sports')
+  @ApiOperation({ summary: '[Admin] List all sports (including inactive)' })
+  listSports() {
+    return this.sportsService.findAll(false);
+  }
+
+  @Post('sports')
+  @ApiOperation({ summary: '[Admin] Create a new sport' })
+  createSport(@Body() dto: CreateSportDto) {
+    return this.sportsService.create(dto);
+  }
+
+  @Patch('sports/reorder')
+  @ApiOperation({ summary: '[Admin] Reorder sports list' })
+  reorderSports(@Body('ids') ids: string[]) {
+    return this.sportsService.reorder(ids);
+  }
+
+  @Patch('sports/:id/toggle')
+  @ApiOperation({ summary: '[Admin] Toggle sport active/inactive' })
+  toggleSport(@Param('id') id: string) {
+    return this.sportsService.toggleActive(id);
+  }
+
+  @Patch('sports/:id')
+  @ApiOperation({ summary: '[Admin] Update sport details' })
+  updateSport(@Param('id') id: string, @Body() dto: UpdateSportDto) {
+    return this.sportsService.update(id, dto);
+  }
+
+  @Delete('sports/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: '[Admin] Delete a sport' })
+  deleteSport(@Param('id') id: string) {
+    return this.sportsService.remove(id);
   }
 
   // ─── Bookings ──────────────────────────────────────────────────────────────

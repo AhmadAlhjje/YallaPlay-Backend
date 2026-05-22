@@ -5,6 +5,7 @@ import { AdminController } from './admin.controller';
 import { User, UserSchema } from '../../database/schemas/user.mongoose-schema';
 import { Facility, FacilitySchema } from '../../database/schemas/facility.mongoose-schema';
 import { Booking, BookingSchema } from '../../database/schemas/booking.mongoose-schema';
+import { SportsModule } from '../sports/sports.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { Booking, BookingSchema } from '../../database/schemas/booking.mongoose-
       { name: Facility.name, schema: FacilitySchema },
       { name: Booking.name, schema: BookingSchema },
     ]),
+    SportsModule,
   ],
   controllers: [AdminController],
   providers: [AdminService],

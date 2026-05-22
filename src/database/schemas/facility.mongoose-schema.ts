@@ -1,6 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { SportType, DayOfWeek } from '@yallaplay/shared-types';
 
 export type FacilityDocument = Facility & Document;
 
@@ -15,7 +14,7 @@ export class Facility {
   @Prop({ trim: true })
   description?: string;
 
-  @Prop({ type: [String], enum: SportType, required: true })
+  @Prop({ type: [String], required: true })
   sports!: string[];
 
   @Prop({ type: [String], default: [] })

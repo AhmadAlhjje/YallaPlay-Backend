@@ -14,6 +14,7 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { PlansModule } from './modules/plans/plans.module';
 import { WeatherModule } from './modules/weather/weather.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { SportsModule } from './modules/sports/sports.module';
 import { validateEnv } from './config/env.validation';
 
 @Module({
@@ -57,11 +58,12 @@ import { validateEnv } from './config/env.validation';
     NotificationsModule,
     OffersModule,
 
-    // Phase 3 — Analytics, Plans, Weather, Admin
+    // Phase 3 — Analytics, Plans, Weather, Admin, Sports
     AnalyticsModule,
     PlansModule,
     WeatherModule,
     AdminModule,
+    SportsModule,
   ],
 })
 export class AppModule {}
